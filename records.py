@@ -1,4 +1,4 @@
-# records.py
+# Weather Records using records.py program
 import json
 from pathlib import Path
 from datetime import datetime, date
