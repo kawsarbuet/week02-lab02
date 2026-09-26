@@ -152,4 +152,88 @@ pip install -r requirements.txt
 python records.py
 
 
+## Example output ////summary.json file
+
+{
+  "source_url": "https://api.frankfurter.app/2024-01-01..2024-06-30?from=CAD&to=USD,EUR,GBP",
+  "records_processed": 125,
+  "monthly_average": {
+    "2024-01": {"USD": 0.75, "EUR": 0.68, "GBP": 0.59},
+    "2024-02": {"USD": 0.74, "EUR": 0.67, "GBP": 0.58}
+  },
+  "largest_single_day_change": {
+    "USD": {"change": 0.012, "from": "2024-03-04", "to": "2024-03-05"}
+  }
+}
+
+## What this tells about:
+
+The program successfully downloaded and filtered more than 50 valid records.
+Monthly averages show how CAD fluctuated against USD, EUR, and GBP over time.
+The largest single‑day change highlights the most volatile day for each currency.
+All dates are converted to ISO strings, confirming correct JSON serialization.
+
+## Data quirks: 
+The Frankfurter API contains several quirks that the program must handle:
+
+## Missing dates
+The API does not return weekends or holidays.
+Program response:  
+The code processes only the dates provided, without assuming continuity.
+
+## Pre‑start business day included
+Queries like 2024‑01‑01..2024‑06‑30 may include the last business day of 2023.
+Program response:  
+filter_records() removes any date earlier than the start date.
+
+## Malformed or incomplete rate maps
+Some entries may be missing currencies or contain unexpected structures.
+Program response:  
+The program checks isinstance(rate_map, dict) and skips malformed entries.
+
+## Python date objects cannot be serialized to JSON
+JSON cannot encode date objects directly.
+Program response:  
+All dates are converted using .isoformat() before writing the summary.
+
+## Design choices: 
+The program uses three core collection types, each chosen for a specific purpose:
+
+1. Dictionary (dict)
+Used for grouping records by month, storing rate maps, and building the final summary.
+Reason:  
+Dictionaries provide fast lookups and a natural key→value structure for dates, months, and currency mappings.
+
+2. List (list)
+Used for storing daily rate maps within each month and iterating through sorted dates.
+Reason:  
+Lists preserve order and allow efficient iteration when computing averages or daily changes.
+
+3. Set (set)
+Used for collecting unique currencies across all records.
+Reason:  
+Sets automatically remove duplicates and ensure each currency is processed exactly once.
+
+4. Comprehensions
+List and set comprehensions make aggregation code concise, readable, and efficient.
+
+## Known limitations:
+Missing currency values within a month
+If a currency appears only on some days, the monthly average is computed only from available values.
+A more advanced version could interpolate or normalize missing data.
+
+## 1. Hard‑coded date range and URL
+The program does not accept command‑line arguments.
+Future improvements could allow custom date ranges, currencies, or output paths.
+
+## 2. No visualization
+The output is JSON only.
+Charts or graphs could make trends easier to interpret.
+
+## 3. No unit tests yet
+The program is structured well for testing, but tests are not included.
+This will likely be required in Week 4.
+
+## 4.Assumes API availability
+If the API changes or becomes unavailable, the program exits cleanly but does not retry or cache data.
 
